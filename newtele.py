@@ -13,7 +13,7 @@ logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s
 logger = logging.getLogger(__name__)
 
 # Define your bot token
-TOKEN = "6311385456:AAEfWRzJNici2DkNWX1VgxgcW8BkcpcOjCM"
+TOKEN = ""
 
 #settingupdatabase
 db_config = {
