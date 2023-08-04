@@ -4,7 +4,7 @@ from telegram.ext.filters import Filters
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup,KeyboardButton
 import mysql.connector
 import re
-import requests
+
 
 
 # Enable logging
@@ -523,42 +523,7 @@ AltezzaSys partners with banking and financial services institution across the g
 
 
 
-#mail method 
-def send_emailjs_notification(user_id, user_input):
-    # Replace the placeholders with your EmailJS configuration
-    emailjs_user_id = 'R3GSYFvCt_g8QLQ0x' 
-    emailjs_service_id = 'service_u17xc3r'
-    emailjs_template_id = 'template_lfihx3y'
-    emailjs_user_name = 'Rakesh Kumar'
-    
-    # EmailJS API endpoint
-    api_endpoint = f'https://api.emailjs.com/api/v1.0/email/send'
-    response = requests.post(api_endpoint, json=payload, headers=headers)
-    print(response.status_code)
-    print(response.text)
 
-    # EmailJS request payload
-    payload = {
-        'service_id': emailjs_service_id,
-        'template_id': emailjs_template_id,
-        'user_name': emailjs_user_name,
-        'user_input': user_input,
-        
-        }
-    headers = {
-        'Authorization': f'Bearer {emailjs_user_id}'
-    }
-
-    # Send the notification via EmailJS API
-    try:
-        response = requests.post(api_endpoint, json=payload)
-        response_data = response.json()
-        if response_data.get('status') == 200:
-            print("Notification email sent successfully!")
-        else:
-            print(f"Failed to send notification email: {response_data.get('error')}")
-    except requests.exceptions.RequestException as e:
-        print(f"Failed to send notification email: {e}")
 
 
 
@@ -644,7 +609,8 @@ def contact(update, context):
     try:
         cursor = conn.cursor()
         cursor.execute("UPDATE users SET contact = %s WHERE user_id = %s", (user_input, user_id,))
-        send_emailjs_notification(user_id, user_input)
+        admin_user_id = 479960624  # Replace with the actual user ID of the admin
+        admin_notification_message = f"User with ID {user_id} saved their contact: {user_input}"
         conn.commit()
         cursor.close()
     except mysql.connector.Error as err:
