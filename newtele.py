@@ -1,7 +1,7 @@
 import logging
 from telegram.ext import Updater, CommandHandler, MessageHandler, CallbackQueryHandler , ConversationHandler
 from telegram.ext.filters import Filters 
-from telegram import InlineKeyboardButton, InlineKeyboardMarkup,KeyboardButton
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup,KeyboardButton,ReplyKeyboardMarkup
 import mysql.connector
 import re
 
@@ -14,13 +14,13 @@ logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s
 logger = logging.getLogger(__name__)
 
 # Define your bot token
-TOKEN = ""
+TOKEN = "6311385456:AAEfWRzJNici2DkNWX1VgxgcW8BkcpcOjCM"
 
 #settingupdatabase
 db_config = {
     'user': 'root',
-    'password': 'Hellobrother@123',
-    'host': 'localhost',
+    'password': 'QAZ!@2023',
+    'host': 'db',
     'database': 'mybot',
 }
 
