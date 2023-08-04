@@ -1,0 +1,37 @@
+version: "3"
+services:
+  # MySQL service
+  db:
+    image: mysql:5.7
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: QAZ!@2023 
+      MYSQL_DATABASE: mybot
+    volumes:
+      - db_data:/var/lib/mysql
+
+  # Python application service
+  app:
+    build: .
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+    volumes:
+      - .:/app
+    command: python newtele.py
+
+  # phpMyAdmin service
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    restart: always
+    ports:
+      - "8080:80"
+    depends_on:
+      - db
+    environment:
+      PMA_HOST: db
+      MYSQL_ROOT_PASSWORD: QAZ!@2023
+
+volumes:
+  db_data:
