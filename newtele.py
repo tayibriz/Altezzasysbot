@@ -43,6 +43,7 @@ def create_users_table():
         cursor.execute("USE mybot")
         cursor.execute("CREATE TABLE IF NOT EXISTS users ("
                        "user_id BIGINT AUTO_INCREMENT PRIMARY KEY, "
+                       "country VARCHAR(255), "
                        "email VARCHAR(255), "
                        "contact VARCHAR(20))"
                        )
@@ -56,7 +57,7 @@ def create_users_table():
 
 
 
-AWAITING_EMAIL, AWAITING_CONTACT = range(2)
+AWAITING_COUNTRY,AWAITING_EMAIL, AWAITING_CONTACT = range(3)
 
 # Command handler for /start command
 def start(update, context):
@@ -589,6 +590,27 @@ def email(update, context):
     finally:
         conn.close()
     update.message.reply_text("Email saved successfully! Please enter your contact number as well:")
+    return AWAITING_COUNTRY
+
+
+
+def save_country(update,context):
+    conn = mysql.connector.connect(**db_config)
+    user_id = context.user_data['user_id']
+    user_input = update.message.text
+    try:
+        cursor = conn.cursor()
+        cursor.execute("UPDATE users SET country = %s WHERE user_id = %s", (user_input, user_id))
+        conn.commit()
+        
+        
+        update.message.reply_text("Country has been saved successfully.")
+        update.message.reply_text("Please provide your contact No.")
+    except mysql.connector.Error as err:
+        update.message.reply_text("An error occurred while saving the country.")
+        print("An error occurred while saving country:", err)
+    finally:
+        conn.close()
     return AWAITING_CONTACT
 
 def is_valid_contact(contact):
@@ -818,6 +840,7 @@ def main():
         entry_points=[MessageHandler(Filters.text & ~Filters.command, email)],
         states={
             AWAITING_EMAIL: [MessageHandler(Filters.text & ~Filters.command, email)],
+            AWAITING_COUNTRY:[MessageHandler(Filters.text & ~Filters.command, save_country)],
             AWAITING_CONTACT: [MessageHandler(Filters.text & ~Filters.command, contact)],
         },
         fallbacks=[],
