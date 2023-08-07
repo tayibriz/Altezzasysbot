@@ -1,8 +1,9 @@
 import logging
 from telegram.ext import Updater, CommandHandler, MessageHandler, CallbackQueryHandler , ConversationHandler
 from telegram.ext.filters import Filters 
-from telegram import InlineKeyboardButton, InlineKeyboardMarkup,KeyboardButton,ReplyKeyboardMarkup
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 import mysql.connector
+from telegram import ReplyKeyboardMarkup,KeyboardButton
 import re
 
 
@@ -57,7 +58,7 @@ def create_users_table():
 
 
 
-AWAITING_COUNTRY,AWAITING_EMAIL, AWAITING_CONTACT = range(3)
+AWAITING_COUNTRY , AWAITING_EMAIL, AWAITING_CONTACT = range(3)
 
 # Command handler for /start command
 def start(update, context):
@@ -529,8 +530,21 @@ AltezzaSys partners with banking and financial services institution across the g
 
 
 
-
 #buttonmethod
+
+
+
+
+
+
+
+
+
+# Call the function to send "new user added" notification
+
+
+
+
 def button(update, context):
     keyboard = [[InlineKeyboardButton("Yes", callback_data='yes'),
                  InlineKeyboardButton("No", callback_data='no')]]
@@ -547,9 +561,33 @@ def button_callback(update, context):
         
         #custom_user_id_counter += 1
         return "AWAITING_EMAIL"
+        
+
+
+       
     elif query.data == 'no':
         context.bot.send_message(chat_id=user_id, text="Thank you for Visiting!")
         return ConversationHandler.END
+    
+
+def save_country(update,context):
+    conn = mysql.connector.connect(**db_config)
+    user_id = context.user_data['user_id']
+    user_input = update.message.text
+    try:
+        cursor = conn.cursor()
+        cursor.execute("UPDATE users SET country = %s WHERE user_id = %s", (user_input, user_id))
+        conn.commit()
+        
+        
+        update.message.reply_text("Country has been saved successfully.")
+        update.message.reply_text("Please provide your contact No.")
+    except mysql.connector.Error as err:
+        update.message.reply_text("An error occurred while saving the country.")
+        print("An error occurred while saving country:", err)
+    finally:
+        conn.close()
+    return AWAITING_CONTACT
 
 def is_valid_email(email):
     # Email regex pattern
@@ -589,29 +627,12 @@ def email(update, context):
             print("Error while saving email to the database.")
     finally:
         conn.close()
-    update.message.reply_text("Email saved successfully! Please enter your Country:")
+    update.message.reply_text("Email saved successfully! Please enter your country:")
     return AWAITING_COUNTRY
 
 
 
-def save_country(update,context):
-    conn = mysql.connector.connect(**db_config)
-    user_id = context.user_data['user_id']
-    user_input = update.message.text
-    try:
-        cursor = conn.cursor()
-        cursor.execute("UPDATE users SET country = %s WHERE user_id = %s", (user_input, user_id))
-        conn.commit()
-        
-        
-        update.message.reply_text("Country has been saved successfully.")
-        update.message.reply_text("Please provide your contact No.")
-    except mysql.connector.Error as err:
-        update.message.reply_text("An error occurred while saving the country.")
-        print("An error occurred while saving country:", err)
-    finally:
-        conn.close()
-    return AWAITING_CONTACT
+
 
 def is_valid_contact(contact):
     # Contact number regex pattern (example: +91-1234567890)
@@ -624,18 +645,19 @@ def contact(update, context):
     user_input = update.message.text
     
     if not is_valid_contact(user_input):
-        update.message.reply_text("Invalid contact number. Please enter a valid contact number in the format: +91-XXXXXXXXXX")
+        update.message.reply_text("Invalid contact number. Please enter a valid contact number in the format:XXXXXXXXXX")
         return 
     # Save user contact to the database
     conn = mysql.connector.connect(**db_config)
     try:
         cursor = conn.cursor()
         cursor.execute("UPDATE users SET contact = %s WHERE user_id = %s", (user_input, user_id,))
+        conn.commit()
+        cursor.close()
+        # Send notification message to the admin
         admin_user_id = 479960624  # Replace with the actual user ID of the admin
         admin_notification_message = f"User with ID {user_id} saved their contact: {user_input}"
         context.bot.send_message(chat_id=admin_user_id, text=admin_notification_message)
-        conn.commit()
-        cursor.close()
     except mysql.connector.Error as err:
         print(f"Error: {err}")
         if err.errno == 2055:  # Check if the error is "Cursor is not connected"
@@ -653,7 +675,8 @@ def contact(update, context):
     reply_keyboard = [[start_button], [help_button]]
     update.message.reply_text("Data saved successfully! Our team will connect with you soon.\n"
                               "If you have any queries, please call our helpline: +91-120-4542476",
-                             reply_markup=ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True))
+                              reply_markup=ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True))
+    
 
     # End the conversation
     context.user_data.clear()
@@ -836,17 +859,7 @@ def main():
     
 
     dispatcher.add_handler(CallbackQueryHandler(button))
-    conv_handler = ConversationHandler(
-        entry_points=[MessageHandler(Filters.text & ~Filters.command, email)],
-        states={
-            AWAITING_EMAIL: [MessageHandler(Filters.text & ~Filters.command, email)],
-            AWAITING_COUNTRY:[MessageHandler(Filters.text & ~Filters.command, save_country)],
-            AWAITING_CONTACT: [MessageHandler(Filters.text & ~Filters.command, contact)],
-        },
-        fallbacks=[],
-    )
-
-    dispatcher.add_handler(conv_handler)
+    
     
 
     
@@ -984,11 +997,21 @@ def main():
 
 
 
-
+    '''MessageHandler(Filters.text & ~Filters.command, email)],'''
 
 
     # Register echo handler for all messages
-    
+    conv_handler = ConversationHandler(
+        entry_points=[MessageHandler(Filters.text & ~Filters.command, email)], 
+        states={
+            AWAITING_EMAIL:[MessageHandler(Filters.text & ~Filters.command, email)],
+            AWAITING_COUNTRY:[MessageHandler(Filters.text & ~Filters.command, save_country)],
+            AWAITING_CONTACT: [MessageHandler(Filters.text & ~Filters.command, contact)]
+        },
+        fallbacks=[],
+    )
+
+    dispatcher.add_handler(conv_handler)
 
     # Start the bot
     updater.start_polling()
