@@ -589,7 +589,7 @@ def email(update, context):
             print("Error while saving email to the database.")
     finally:
         conn.close()
-    update.message.reply_text("Email saved successfully! Please enter your contact number as well:")
+    update.message.reply_text("Email saved successfully! Please enter your Country:")
     return AWAITING_COUNTRY
 
 
