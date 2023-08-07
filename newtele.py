@@ -544,7 +544,7 @@ def button_callback(update, context):
         context.bot.send_message(chat_id=user_id, text="Please enter your mail ID to proceed further:")
         context.user_data['user_id'] = update.effective_user.id
         
-        custom_user_id_counter += 1
+        #custom_user_id_counter += 1
         return "AWAITING_EMAIL"
     elif query.data == 'no':
         context.bot.send_message(chat_id=user_id, text="Thank you for Visiting!")
@@ -593,7 +593,7 @@ def email(update, context):
 
 def is_valid_contact(contact):
     # Contact number regex pattern (example: +91-1234567890)
-    pattern = r'^\+?\d{1,3}-?\d{10}$'
+    pattern = r'^\d{10}$'
     return re.match(pattern, contact)
 
 def contact(update, context):
@@ -611,6 +611,7 @@ def contact(update, context):
         cursor.execute("UPDATE users SET contact = %s WHERE user_id = %s", (user_input, user_id,))
         admin_user_id = 479960624  # Replace with the actual user ID of the admin
         admin_notification_message = f"User with ID {user_id} saved their contact: {user_input}"
+        context.bot.send_message(chat_id=admin_user_id, text=admin_notification_message)
         conn.commit()
         cursor.close()
     except mysql.connector.Error as err:
